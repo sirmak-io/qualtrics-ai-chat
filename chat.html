@@ -28,6 +28,7 @@
       border-radius: 10px;
       max-width: 75%;
       line-height: 1.4;
+      white-space: pre-wrap;
     }
 
     .bot {
@@ -66,6 +67,12 @@
       background: #2563eb;
       color: white;
     }
+
+    #sendBtn:disabled,
+    #input:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
   </style>
 </head>
 <body>
@@ -77,68 +84,110 @@
   </div>
 
   <script>
-  const chat = document.getElementById("chat");
-  const input = document.getElementById("input");
-  const sendBtn = document.getElementById("sendBtn");
+    const chat = document.getElementById("chat");
+    const input = document.getElementById("input");
+    const sendBtn = document.getElementById("sendBtn");
 
-  const params = new URLSearchParams(window.location.search);
-  const participantId = params.get("pid");
-  const inparty = params.get("inparty");
-  const outparty = params.get("outparty");
+    const params = new URLSearchParams(window.location.search);
+    const participantId = params.get("pid");
+    const inparty = params.get("inparty");
+    const outparty = params.get("outparty");
 
-  let history = [];
+    let history = [];
+    let messageCount = 0;
+    const MAX_MESSAGES = 3;
+    let isWaiting = false;
 
-  function addMessage(role, text) {
-    const div = document.createElement("div");
-    div.className = "msg " + role;
-    div.textContent = text;
-    chat.appendChild(div);
-    chat.scrollTop = chat.scrollHeight;
-  }
-
-  addMessage(
-    "bot",
-    "Merhaba. Bugün " + outparty + " supporters ve demokrasi algıları hakkında kısa bir sohbet yapacağız."
-  );
-
-  async function sendMessage() {
-    const text = input.value.trim();
-    if (!text) return;
-
-    addMessage("user", text);
-    history.push({ role: "user", content: text });
-    input.value = "";
-
-    try {
-      const res = await fetch("https://qualtrics-ai-backend-a8j5.onrender.com/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          message: text,
-          participantId: participantId,
-          inparty: inparty,
-          outparty: outparty,
-          history: history
-        })
-      });
-
-      const data = await res.json();
-      const reply = data.reply || "Üzgünüm, şu anda cevap üretemedim.";
-
-      addMessage("bot", reply);
-      history.push({ role: "assistant", content: reply });
-    } catch (err) {
-      addMessage("bot", "Bağlantı hatası oluştu. Lütfen tekrar deneyin.");
-      console.error(err);
+    function addMessage(role, text) {
+      const div = document.createElement("div");
+      div.className = "msg " + role;
+      div.textContent = text;
+      chat.appendChild(div);
+      chat.scrollTop = chat.scrollHeight;
     }
-  }
 
-  sendBtn.addEventListener("click", sendMessage);
-  input.addEventListener("keydown", function (e) {
-    if (e.key === "Enter") sendMessage();
-  });
+    function lockChat() {
+      input.disabled = true;
+      sendBtn.disabled = true;
+    }
+
+    function unlockChat() {
+      input.disabled = false;
+      sendBtn.disabled = false;
+      input.focus();
+    }
+
+    function finishChat() {
+      addMessage("bot", "Teşekkürler. Sohbet tamamlandı. Lütfen ankete devam edin.");
+      lockChat();
+    }
+
+    addMessage(
+      "bot",
+      "Merhaba. Bugün " + outparty + " destekçileri ve demokrasi algıları hakkında kısa bir sohbet yapacağız."
+    );
+
+    async function sendMessage() {
+      if (isWaiting) return;
+      if (messageCount >= MAX_MESSAGES) {
+        finishChat();
+        return;
+      }
+
+      const text = input.value.trim();
+      if (!text) return;
+
+      addMessage("user", text);
+      history.push({ role: "user", content: text });
+      input.value = "";
+      messageCount += 1;
+
+      isWaiting = true;
+      lockChat();
+
+      try {
+        const res = await fetch("https://qualtrics-ai-backend-a8j5.onrender.com/chat", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            message: text,
+            participantId: participantId,
+            inparty: inparty,
+            outparty: outparty,
+            history: history
+          })
+        });
+
+        const data = await res.json();
+        const reply = data.reply || "Üzgünüm, şu anda cevap üretemedim.";
+
+        addMessage("bot", reply);
+        history.push({ role: "assistant", content: reply });
+
+        if (messageCount >= MAX_MESSAGES) {
+          finishChat();
+        } else {
+          unlockChat();
+        }
+      } catch (err) {
+        addMessage("bot", "Bağlantı hatası oluştu. Lütfen tekrar deneyin.");
+        console.error(err);
+        unlockChat();
+      } finally {
+        isWaiting = false;
+      }
+    }
+
+    sendBtn.addEventListener("click", sendMessage);
+
+    input.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
   </script>
 </body>
 </html>

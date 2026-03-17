@@ -90,7 +90,11 @@ const outparty = params.get("outparty")
       chat.scrollTop = chat.scrollHeight;
     }
 
-    addMessage("bot", "Merhaba. Bu sayfa şu an test amaçlı çalışıyor. Bir sonraki adımda bunu Qualtrics içine gömeceğiz.");
+   addMessage(
+  "bot",
+  "Test çalışıyor. Senin partin: " + inparty +
+  " | karşı parti: " + outparty
+)
 
     function sendMessage() {
       const text = input.value.trim();

@@ -97,6 +97,7 @@
     let messageCount = 0;
     const MAX_MESSAGES = 3;
     let isWaiting = false;
+    let chatFinished = false;
 
     function addMessage(role, text) {
       const div = document.createElement("div");
@@ -112,46 +113,36 @@
     }
 
     function unlockChat() {
+      if (chatFinished) return;
       input.disabled = false;
       sendBtn.disabled = false;
       input.focus();
     }
 
-    function disableQualtricsNext() {
+    function notifyQualtricsChatComplete() {
       try {
-        const nextBtn = window.parent.document.querySelector("#NextButton");
-        if (nextBtn) {
-          nextBtn.disabled = true;
-          nextBtn.style.opacity = "0.5";
-          nextBtn.style.pointerEvents = "none";
-        }
+        window.parent.postMessage(
+          {
+            type: "chatComplete",
+            participantId: participantId,
+            inparty: inparty,
+            outparty: outparty,
+            history: history
+          },
+          "*"
+        );
       } catch (e) {
-        console.error("Qualtrics Next button disable error:", e);
-      }
-    }
-
-    function enableQualtricsNext() {
-      try {
-        const nextBtn = window.parent.document.querySelector("#NextButton");
-        if (nextBtn) {
-          nextBtn.disabled = false;
-          nextBtn.style.opacity = "1";
-          nextBtn.style.pointerEvents = "auto";
-        }
-      } catch (e) {
-        console.error("Qualtrics Next button enable error:", e);
+        console.error("postMessage error:", e);
       }
     }
 
     function finishChat() {
+      if (chatFinished) return;
+      chatFinished = true;
       addMessage("bot", "Teşekkürler. Sohbet tamamlandı. Lütfen ankete devam edin.");
       lockChat();
-      enableQualtricsNext();
+      notifyQualtricsChatComplete();
     }
-
-    window.addEventListener("load", function () {
-      disableQualtricsNext();
-    });
 
     addMessage(
       "bot",
@@ -161,12 +152,7 @@
     );
 
     async function sendMessage() {
-      if (isWaiting) return;
-
-      if (messageCount >= MAX_MESSAGES) {
-        finishChat();
-        return;
-      }
+      if (isWaiting || chatFinished) return;
 
       const text = input.value.trim();
       if (!text) return;

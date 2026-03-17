@@ -77,9 +77,10 @@
   </div>
 
   <script>
-    const chat = document.getElementById("chat");
-    const input = document.getElementById("input");
-    const sendBtn = document.getElementById("sendBtn");
+    const params = new URLSearchParams(window.location.search)
+const participantId = params.get("pid")
+const inparty = params.get("inparty")
+const outparty = params.get("outparty")
 
     function addMessage(role, text) {
       const div = document.createElement("div");

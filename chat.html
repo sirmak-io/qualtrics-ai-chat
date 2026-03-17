@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Civic Chat</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #ffffff;
+    }
+
+    #chat {
+      height: 420px;
+      border: 1px solid #dcdcdc;
+      border-radius: 12px;
+      padding: 12px;
+      overflow-y: auto;
+      background: #fafafa;
+      margin-bottom: 12px;
+    }
+
+    .msg {
+      margin: 10px 0;
+      padding: 10px 12px;
+      border-radius: 10px;
+      max-width: 75%;
+      line-height: 1.4;
+    }
+
+    .bot {
+      background: #f1f1f1;
+      color: #222;
+    }
+
+    .user {
+      background: #dbeafe;
+      color: #111;
+      margin-left: auto;
+      text-align: right;
+    }
+
+    .row {
+      display: flex;
+      gap: 8px;
+    }
+
+    #input {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    button {
+      padding: 10px 14px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    #sendBtn {
+      background: #2563eb;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <div id="chat"></div>
+
+  <div class="row">
+    <input id="input" type="text" placeholder="Mesajınızı yazın">
+    <button id="sendBtn">Gönder</button>
+  </div>
+
+  <script>
+    const chat = document.getElementById("chat");
+    const input = document.getElementById("input");
+    const sendBtn = document.getElementById("sendBtn");
+
+    function addMessage(role, text) {
+      const div = document.createElement("div");
+      div.className = "msg " + role;
+      div.textContent = text;
+      chat.appendChild(div);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    addMessage("bot", "Merhaba. Bu sayfa şu an test amaçlı çalışıyor. Bir sonraki adımda bunu Qualtrics içine gömeceğiz.");
+
+    function sendMessage() {
+      const text = input.value.trim();
+      if (!text) return;
+      addMessage("user", text);
+      input.value = "";
+
+      setTimeout(() => {
+        addMessage("bot", "Mesajın alındı. Bir sonraki adımda bunu canlı AI cevabına bağlayacağız.");
+      }, 500);
+    }
+
+    sendBtn.addEventListener("click", sendMessage);
+    input.addEventListener("keydown", function(e) {
+      if (e.key === "Enter") sendMessage();
+    });
+  </script>
+</body>
+</html>

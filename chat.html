@@ -77,40 +77,68 @@
   </div>
 
   <script>
-    const params = new URLSearchParams(window.location.search)
-const participantId = params.get("pid")
-const inparty = params.get("inparty")
-const outparty = params.get("outparty")
+  const chat = document.getElementById("chat");
+  const input = document.getElementById("input");
+  const sendBtn = document.getElementById("sendBtn");
 
-    function addMessage(role, text) {
-      const div = document.createElement("div");
-      div.className = "msg " + role;
-      div.textContent = text;
-      chat.appendChild(div);
-      chat.scrollTop = chat.scrollHeight;
+  const params = new URLSearchParams(window.location.search);
+  const participantId = params.get("pid");
+  const inparty = params.get("inparty");
+  const outparty = params.get("outparty");
+
+  let history = [];
+
+  function addMessage(role, text) {
+    const div = document.createElement("div");
+    div.className = "msg " + role;
+    div.textContent = text;
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+  addMessage(
+    "bot",
+    "Merhaba. Bugün " + outparty + " supporters ve demokrasi algıları hakkında kısa bir sohbet yapacağız."
+  );
+
+  async function sendMessage() {
+    const text = input.value.trim();
+    if (!text) return;
+
+    addMessage("user", text);
+    history.push({ role: "user", content: text });
+    input.value = "";
+
+    try {
+      const res = await fetch("https://qualtrics-ai-backend-a8j5.onrender.com/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          message: text,
+          participantId: participantId,
+          inparty: inparty,
+          outparty: outparty,
+          history: history
+        })
+      });
+
+      const data = await res.json();
+      const reply = data.reply || "Üzgünüm, şu anda cevap üretemedim.";
+
+      addMessage("bot", reply);
+      history.push({ role: "assistant", content: reply });
+    } catch (err) {
+      addMessage("bot", "Bağlantı hatası oluştu. Lütfen tekrar deneyin.");
+      console.error(err);
     }
+  }
 
-   addMessage(
-  "bot",
-  "Test çalışıyor. Senin partin: " + inparty +
-  " | karşı parti: " + outparty
-)
-
-    function sendMessage() {
-      const text = input.value.trim();
-      if (!text) return;
-      addMessage("user", text);
-      input.value = "";
-
-      setTimeout(() => {
-        addMessage("bot", "Mesajın alındı. Bir sonraki adımda bunu canlı AI cevabına bağlayacağız.");
-      }, 500);
-    }
-
-    sendBtn.addEventListener("click", sendMessage);
-    input.addEventListener("keydown", function(e) {
-      if (e.key === "Enter") sendMessage();
-    });
+  sendBtn.addEventListener("click", sendMessage);
+  input.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") sendMessage();
+  });
   </script>
 </body>
 </html>

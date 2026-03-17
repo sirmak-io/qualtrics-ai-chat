@@ -117,18 +117,52 @@
       input.focus();
     }
 
+    function disableQualtricsNext() {
+      try {
+        const nextBtn = window.parent.document.querySelector("#NextButton");
+        if (nextBtn) {
+          nextBtn.disabled = true;
+          nextBtn.style.opacity = "0.5";
+          nextBtn.style.pointerEvents = "none";
+        }
+      } catch (e) {
+        console.error("Qualtrics Next button disable error:", e);
+      }
+    }
+
+    function enableQualtricsNext() {
+      try {
+        const nextBtn = window.parent.document.querySelector("#NextButton");
+        if (nextBtn) {
+          nextBtn.disabled = false;
+          nextBtn.style.opacity = "1";
+          nextBtn.style.pointerEvents = "auto";
+        }
+      } catch (e) {
+        console.error("Qualtrics Next button enable error:", e);
+      }
+    }
+
     function finishChat() {
       addMessage("bot", "Teşekkürler. Sohbet tamamlandı. Lütfen ankete devam edin.");
       lockChat();
+      enableQualtricsNext();
     }
+
+    window.addEventListener("load", function () {
+      disableQualtricsNext();
+    });
 
     addMessage(
       "bot",
-      "Merhaba. Bugün " + outparty + " destekçileri ve demokrasi algıları hakkında kısa bir sohbet yapacağız."
+      "Merhaba. Bu kısa sohbet 3 mesaj sürecek. Bugün " +
+        outparty +
+        " destekçileri ve demokrasi algıları hakkında konuşacağız. Sohbet tamamlandığında ankete devam edebilirsiniz."
     );
 
     async function sendMessage() {
       if (isWaiting) return;
+
       if (messageCount >= MAX_MESSAGES) {
         finishChat();
         return;

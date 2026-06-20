@@ -166,7 +166,7 @@
       lockChat();
 
       try {
-        const res = await fetch("https://qualtrics-ai-backend-a8j5.onrender.com/chat", {
+        const res = await fetch("/api/chat", {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
